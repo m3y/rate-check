@@ -1,0 +1,2 @@
+Virtual currency rate
+=====================
