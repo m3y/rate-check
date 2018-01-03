@@ -5,44 +5,42 @@ REVISION := $(shell git rev-parse --short HEAD)
 SRCS := $(shell find . -type f -name '*.go')
 LDFLAGS := -ldflags="-s -w -X \"main.Version=$(VERSION)\" -X \"main.Revision=$(REVISION)\" -extldflags \"-static\""
 
-.PHONY: init
-init:
-	dep init
+## Setup
+setup:
+	go get github.com/golang/dep/cmd/dep
+	go get github.com/golang/lint/golint
+	go get golang.org/x/tools/cmd/goimports
+	go get github.com/Songmu/make2help/cmd/make2help
 
-.PHONY: dep
-dep:
+## Install dependencies
+deps: setup
 	dep ensure
 
+## Run tests
+test: deps
+	go test -cover -v
+
+## Lint
+lint: setup
+	go vet $(SRCS)
+	golint $(SRCS)
+
+## Format source codes
+fmt: setup
+	goimports -w $(SRCS)
+
+## build binaries ex. make bin/vcrate
 bin/$(NAME): $(SRCS)
 	go build -a -tags netgo -installsuffix netgo $(LDFLAGS) -o bin/$(NAME)
 
-.PHONY: install
-install:
-	go install $(LDFLAGS)
-
-.PHONY: clean
+## Clean
 clean:
 	rm -rf bin/*
 	rm -rf dist/*
 	rm -rf vendor/*
 
-.PHONY: test
-test:
-	go test -cover -v
+## Show help
+help:
+	@make2help $(MAXEFILE_LIST)
 
-.PHONY: cross-build
-cross-build: deps
-	for os in darwin linux windows; do \
-		for arch in amd64 386; do \
-			GOOS=$$os GOARCH=$$arch CGO_ENABLED=0 go build -a -tags netgo -installsuffix netgo $(LDFLAGS) -o dist/$$os-$$arch/$(NAME); \
-		done; \
-	done
-
-.PHONY: dist
-dist:
-	cd dist && \
-	$(DIST_DIRS) cp ../LICENSE {} \; && \
-	$(DIST_DIRS) cp ../README.md {} \; && \
-	$(DIST_DIRS) tar -zcf $(NAME)-$(VERSION)-{}.tar.gz {} \; && \
-	$(DIST_DIRS) zip -r $(NAME)-$(VERSION)-{}.zip {} \; && \
-	cd ..
+.PHONY: setup deps test lint fmt clean help
