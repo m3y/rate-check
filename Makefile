@@ -30,7 +30,7 @@ fmt: setup
 	goimports -w $(SRCS)
 
 ## build binaries ex. make bin/vcrate
-bin/%: cmd/%/main.go deps
+bin/$(NAME):
 	go build -a -tags netgo -installsuffix netgo $(LDFLAGS) -o $@ $<
 
 ## Clean

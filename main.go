@@ -1,12 +1,19 @@
-package vcrate
+package main
 
 import (
+	"flag"
+	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 )
 
-func vcrate() (body string, retErr error) {
-	url := "https://coincheck.com/api/rate/xrp_jpy"
+var (
+	currency = flag.String("c", "xrp", "currency")
+)
+
+func vcrate(currency string) (body string, retErr error) {
+	url := "https://coincheck.com/api/rate/" + currency + "_jpy"
 	client := &http.Client{}
 
 	req, err := http.NewRequest("GET", url, nil)
@@ -27,4 +34,15 @@ func vcrate() (body string, retErr error) {
 	}
 
 	return string(resBody), nil
+}
+
+func main() {
+	flag.Parse()
+
+	body, err := vcrate(*currency)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(body)
 }
